@@ -5,10 +5,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
     <title>智能中医病历助手</title>
-    
-<style>
+    <style>
         :root {
             --primary: #2c3e50;
             --secondary: #18bc9c;
@@ -42,8 +40,22 @@
         #rawInput { flex: 1; width: 100%; padding: 1rem; border: 1px solid var(--border); border-radius: 4px; resize: none; font-size: 1rem; font-family: inherit; box-sizing: border-box; margin-bottom: 1rem; line-height: 1.5; }
         #rawInput:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 5px rgba(24, 188, 156, 0.3); }
         
-        button.action-btn { background-color: var(--secondary); color: white; border: none; padding: 1rem; font-size: 1.1rem; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background 0.3s; }
-        button.action-btn:hover { background-color: #128f76; }
+	button.action-btn { 
+            background-color: var(--secondary); 
+            color: white; 
+            border: none; 
+            padding: 0.8rem 1rem; 
+            font-size: 1rem; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: background 0.3s; 
+            
+            /* 🌟 核心修改：保持文字一行，但不允许裁剪，同时设定最小宽度 */
+            white-space: nowrap; 
+            min-width: 120px; 
+        }        
+	button.action-btn:hover { background-color: #128f76; }
         button.action-btn:disabled { background-color: #95a5a6; cursor: not-allowed; }
         #status { font-size: 0.9rem; color: #7f8c8d; margin-top: 0.5rem; text-align: center; height: 1.2rem; }
 
@@ -122,51 +134,10 @@
         .modal-actions button { padding: 0.8rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem;}
         .btn-cancel { background: var(--warning); color: white; }
         .btn-save { background: var(--secondary); color: white; }
-
-	/* === 📱 手机屏幕适配代码 (响应式布局) 放这里！=== */
-        @media (max-width: 768px) {
-            /* 1. 核心：让主界面的左右两块变成上下排列 */
-            main {
-                flex-direction: column;
-                padding: 1rem 1rem 2rem; 
-                gap: 1.5rem; 
-            }
-            
-            /* 2. 顶部导航栏：让标题和设置按钮上下居中排列，防挤压 */
-            header {
-                flex-direction: column;
-                gap: 10px;
-                padding: 1rem;
-                text-align: center;
-            }
-
-            /* 3. 使用说明书：调整边距适应窄屏 */
-            .guide-container {
-                margin: 1rem 1rem 0;
-            }
-
-            /* 4. 按钮组优化：允许一排装不下的按钮自动换行到底部 */
-            .panel > div[style*="display: flex"] {
-                flex-wrap: wrap; 
-            }
-            
-            /* 5. 强行让部分按钮在手机上占满宽度，方便手指点击 */
-            button.action-btn {
-                flex: 1 1 100% !important; 
-                margin-bottom: 5px;
-            }
-
-            /* 6. 设置弹窗适配：让弹窗面板在手机上更宽 */
-            .modal-content {
-                width: 95%;
-                padding: 1.5rem;
-            }
-        }
-
     </style>
 </head>
-<body>
 
+<body>
 <header>
     <h1>👩‍⚕️ 智能中医病历助手</h1>
         <button class="settings-btn" onclick="openSettings()">⚙️ 系统配置 & 私人字典</button>
@@ -175,17 +146,20 @@
 <div class="guide-container">
     <details> <summary>📖 使用指南 (点击展开/折叠)</summary>
         <div class="guide-content">
-            <h4>1. 极速写病历 (如何使用)</h4>
+            <h4>1. 极速写病历 (语音与文本混合输入)</h4>
             <ul>
-                <li>在左侧输入框中，用您最习惯的语言（大白话、拼音缩写、中英夹杂）记录病人的症状体征。</li>
+                <li><strong>🎙️ 语音输入：</strong> 点击【🎤 点击录音】开始说话。支持大白话、中英夹杂、穴位拼音。说完后再次点击该按钮，文字会自动上屏。您可以<strong>分多次点击录音</strong>，内容会自动拼接。</li>
+                <li><strong>⌨️ 文本补充：</strong> 录音完成后，您可以直接在左侧输入框内打字，修改或补充遗漏的细节。</li>
                 <li><strong>🚨 隐私红线：</strong> 严禁输入患者真实姓名 (Name) 及出生日期 (DOB)。</li>
-                <li>点击【✨ 智能生成】，AI 会瞬间将白话翻译为专业医学英文，并自动切分到右侧的 S/O/A/P 四个文本框中。</li>
+                <li>确认左侧文字无误后，点击【✨ 智能生成】，AI 会瞬间将其翻译为专业医学英文，并自动切分到右侧的 Subjective (S) 和 Objective (O) 两个文本框中。</li>
             </ul>
+            
             <h4>2. 完美适配 Unified Practice (如何复制)</h4>
             <ul>
                 <li>右侧的文本框是<strong>可编辑</strong>的。如果 AI 翻译的某个词不合心意，您可以直接点击文本框进行手动修改。</li>
                 <li>确认无误后，依次点击每个框右上角的【📋 复制】按钮，然后直接粘贴到 Unified Practice 对应的格子中即可。</li>
             </ul>
+            
             <h4>3. 打造您的专属助手 (私人字典)</h4>
             <ul>
                 <li>如果 AI 老是用错某个术语，请点击右上角【⚙️ 系统配置】。</li>
@@ -206,12 +180,12 @@
                 <option value="gemini-2.0-flash">🚀 Gemini 2.0 Flash (极速响应)</option>
             </select>
         </div>
-        <textarea id="rawInput" placeholder="在此输入门诊速记...&#10;例如：&#10;m 45y, 失眠伴随偏头痛3个月。之前查出过 chronic migraine。无心悸，未见盗汗。舌尖红，苔薄黄，脉弦细。辨证：肝郁化火。针刺：印堂，HT7，LR3。留针30min，照TDP。"></textarea>
-	<div style="display: flex; gap: 1rem;">
-    	    <button id="generateBtn" class="action-btn" style="flex: 2;" onclick="generateSOAP()">✨ 智能生成</button>
-    	    <button id="resetBtn" class="action-btn btn-reset" style="flex: 1;" onclick="resetAll()">🗑️ 一键清空</button>
-	</div>
-	<div id="status"></div>
+        <textarea id="rawInput" placeholder="在此输入门诊速记...&#10;例如：&#10;m 45y, 失眠伴随偏头痛3个月。之前查出过 chronic migraine，吃止痛药无效。近期压力大。无心悸，未见盗汗。右侧颈肩肌肉僵硬压痛。舌尖红，苔薄黄，脉弦细。"></textarea>
+	<div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+	    <button id="recordBtn" class="action-btn" style="flex: 1; background-color: #e74c3c;" onclick="toggleRecording()">🎤 点击录音</button>            <button id="generateBtn" class="action-btn" style="flex: 2;" onclick="generateSOAP()">✨ 智能生成</button>
+            <button id="resetBtn" class="action-btn btn-reset" style="flex: 1;" onclick="resetAll()">🗑️ 一键清空</button>
+        </div>
+        <div id="status"></div>
     </div>
 
 <div class="panel">
@@ -236,22 +210,6 @@
         </div>
         <textarea id="outO" oninput="adjustTextareaHeight('outO')" placeholder="Objective..."></textarea>
     </div>
-
-    <div class="soap-section">
-        <div class="section-header">
-            <span class="section-label">A (Assessment)</span>
-            <button class="copy-btn" onclick="copySection(this, 'outA')">📋 复制</button>
-        </div>
-        <textarea id="outA" oninput="adjustTextareaHeight('outA')" placeholder="Assessment..."></textarea>
-    </div>
-
-    <div class="soap-section">
-        <div class="section-header">
-            <span class="section-label">P (Plan)</span>
-            <button class="copy-btn" onclick="copySection(this, 'outP')">📋 复制</button>
-        </div>
-        <textarea id="outP" oninput="adjustTextareaHeight('outP')" placeholder="Plan..."></textarea>
-    </div>
   </div>
 </div>
 </main>
@@ -263,6 +221,9 @@
         <label>🔑 1. Gemini API Key (本地保存，绝不上传)</label>
         <input type="password" id="apiKeyInput" placeholder="请粘贴 Google AI Studio 申请的 API Key...">
         
+	<label>☁️ 1.5 Google Cloud 语音 API Key </label>
+	<input type="password" id="gcpApiKeyInput" placeholder="请粘贴 Google Cloud API Key...">
+
         <label>🧠 2. 底层 System Prompt (核心运转逻辑，建议勿动)</label>
         <textarea id="promptInput" style="height: 180px; font-size: 0.9rem;"></textarea>
         
@@ -304,11 +265,11 @@ Translate clinical shorthand and raw inputs into a highly professional, clinical
 - Eliminate narrative fluff. Use standard medical abbreviations (e.g., CC, Hx, Dx, Sx, ROM) appropriately.
 
 # Strict Formatting Rules (API Optimized):
-1. OUTPUT STRUCTURE: You MUST output exactly four sections beginning with [S], [O], [A], [P].
-2. ZERO PADDING: Do NOT output any conversational text, intro, or outro before or after the SOAP blocks. 
+1. OUTPUT STRUCTURE: You MUST output exactly TWO sections beginning with [S] and [O].
+2. ZERO PADDING: Do NOT output any conversational text, intro, or outro before or after the blocks. 
 3. INTEGRITY: If information for a section is missing from the input, output "N/A". NEVER hallucinate data, symptoms, or interventions.
 
-# SOAP Section Guidelines:
+# Section Guidelines:
 [S] Subjective: 
 - Include Chief Complaint (CC), onset, and pain severity if provided.
 - ALL Western Medical Diagnoses or conditions MUST be placed here and framed strictly as patient-reported history or external referrals (e.g., "Pt reports MD diagnosis of [Condition]" or "Reported PMHx of [Disease]").
@@ -317,17 +278,9 @@ Translate clinical shorthand and raw inputs into a highly professional, clinical
 [O] Objective: 
 - Include physical exam findings, Range of Motion (ROM), or orthopedic tests if provided.
 - Tongue and Pulse descriptions MUST adhere strictly to WHO/Bensky standardized TCM terminology.
+- FORMATTING: Output findings in a clean, bulleted list or distinct lines (e.g., separate lines for Physical Exam, Tongue, and Pulse) for high readability in audits.`;
 
-[A] Assessment: 
-- TCM Pattern Diagnosis ONLY (e.g., "Liver Qi Stagnation with Blood Stasis"). 
-- NEVER generate or infer any Western medical diagnoses in this section.
-
-[P] Plan: 
-- Use clinical action verbs and format concisely.
-- Include: 1) Patient position (e.g., prone/supine), 2) Acupuncture points administered (specify bilateral/left/right), 3) Needle retention time.
-- Note any adjunct therapies (e.g., Cupping, Moxibustion, Tuina) and immediate patient response post-treatment if provided.`;
-
-    window.onload = function() {
+ window.onload = function() {
         if (!localStorage.getItem('systemPrompt')) {
             localStorage.setItem('systemPrompt', defaultPrompt);
         }
@@ -337,9 +290,10 @@ Translate clinical shorthand and raw inputs into a highly professional, clinical
         loadSettingsToUI();
     };
 
-    function loadSettingsToUI() {
+function loadSettingsToUI() {
         document.getElementById('promptInput').value = localStorage.getItem('systemPrompt') || defaultPrompt;
         document.getElementById('apiKeyInput').value = localStorage.getItem('apiKey') || '';
+        document.getElementById('gcpApiKeyInput').value = localStorage.getItem('gcpApiKey') || ''; // 新增读取 GCP Key
         document.getElementById('rulesInput').value = localStorage.getItem('customRules') || '';
     }
 
@@ -348,15 +302,21 @@ Translate clinical shorthand and raw inputs into a highly professional, clinical
     
     function saveSettings() {
         localStorage.setItem('apiKey', document.getElementById('apiKeyInput').value.trim());
+        localStorage.setItem('gcpApiKey', document.getElementById('gcpApiKeyInput').value.trim()); // 新增保存 GCP Key
         localStorage.setItem('systemPrompt', document.getElementById('promptInput').value.trim());
         localStorage.setItem('customRules', document.getElementById('rulesInput').value.trim());
         closeSettings();
         alert('✅ 配置已安全保存在本地浏览器！');
     }
 
-    // 导入导出设置功能
+    // 导入导出设置功能也需要加上 gcpApiKey
     function exportSettings() {
-        const settingsData = { apiKey: document.getElementById('apiKeyInput').value.trim(), systemPrompt: document.getElementById('promptInput').value.trim(), customRules: document.getElementById('rulesInput').value.trim() };
+        const settingsData = { 
+            apiKey: document.getElementById('apiKeyInput').value.trim(), 
+            gcpApiKey: document.getElementById('gcpApiKeyInput').value.trim(), // 新增导出
+            systemPrompt: document.getElementById('promptInput').value.trim(), 
+            customRules: document.getElementById('rulesInput').value.trim() 
+        };
         const dataStr = JSON.stringify(settingsData, null, 2);
         const blob = new Blob([dataStr], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -372,6 +332,7 @@ Translate clinical shorthand and raw inputs into a highly professional, clinical
             try {
                 const importedData = JSON.parse(e.target.result);
                 if (importedData.apiKey !== undefined) document.getElementById('apiKeyInput').value = importedData.apiKey;
+                if (importedData.gcpApiKey !== undefined) document.getElementById('gcpApiKeyInput').value = importedData.gcpApiKey; // 新增导入
                 if (importedData.systemPrompt !== undefined) document.getElementById('promptInput').value = importedData.systemPrompt;
                 if (importedData.customRules !== undefined) document.getElementById('rulesInput').value = importedData.customRules;
                 event.target.value = ''; 
@@ -475,7 +436,7 @@ async function callGeminiAPI(instructionText) {
 	document.getElementById('usedModel').innerText = ""; // 新增：开始生成时清空模型显示
         
         // 预清空内容并提示
-        const boxes = ['outS', 'outO', 'outA', 'outP'];
+        const boxes = ['outS', 'outO'];
         boxes.forEach(id => document.getElementById(id).value = "正在生成中...");
 
         const systemPrompt = localStorage.getItem('systemPrompt');
@@ -487,23 +448,16 @@ async function callGeminiAPI(instructionText) {
         if (result) {
             try {
                 // 1. 终极兼容提取法：精确抓取标签后面的内容
-                const matchS = result.match(/\[S\]([\s\S]*?)(?=\[O\]|\[A\]|\[P\]|$)/i);
-                const matchO = result.match(/\[O\]([\s\S]*?)(?=\[A\]|\[P\]|$)/i);
-                const matchA = result.match(/\[A\]([\s\S]*?)(?=\[P\]|$)/i);
-                const matchP = result.match(/\[P\]([\s\S]*?)$/i);
-
+		const matchS = result.match(/\[S\]([\s\S]*?)(?=\[O\]|$)/i);
+		const matchO = result.match(/\[O\]([\s\S]*?)$/i);
                 // 2. 兜底保护：如果 AI 完全没按指令输出这四个标签，直接展示原始文本
-                if (!matchS && !matchO && !matchA && !matchP) {
+                if (!matchS && !matchO) {
                     document.getElementById('outS').value = "【⚠️ 格式解析失败，AI 原始输出如下，请检查】\n\n" + result;
                     document.getElementById('outO').value = "";
-                    document.getElementById('outA').value = "";
-                    document.getElementById('outP').value = "";
-		
-		// 👇 加上这两句，防止报错后按钮一直死机锁死
-                    btn.disabled = false; 
-                    status.innerText = "";
 
-                    return; // 提前结束
+		    btn.disabled = false; 
+                    status.innerText = "";
+               return; // 提前结束
                 }
 
                 // 3. 智能清理工具：自动抹掉开头多余的 "Subjective:" 或 "Objective:" 等废话
@@ -516,15 +470,11 @@ async function callGeminiAPI(instructionText) {
                 // 4. 安全赋值到文本框
                 document.getElementById('outS').value = cleanText(matchS);
                 document.getElementById('outO').value = cleanText(matchO);
-                document.getElementById('outA').value = cleanText(matchA);
-                document.getElementById('outP').value = cleanText(matchP);
 
             } catch (e) {
                 // 极端情况备用方案
                 document.getElementById('outS').value = "【代码解析发生异常】\n" + result;
                 document.getElementById('outO').value = "";
-                document.getElementById('outA').value = "";
-                document.getElementById('outP').value = "";
             }
         } else {
             boxes.forEach(id => document.getElementById(id).value = "");
@@ -576,7 +526,7 @@ async function callGeminiAPI(instructionText) {
         document.getElementById('rawInput').value = "";
         
         // 2. 清空右侧四个输出框
-        const boxes = ['outS', 'outO', 'outA', 'outP'];
+        const boxes = ['outS', 'outO'];
         boxes.forEach(id => {
             const el = document.getElementById(id);
             el.value = "";
@@ -589,7 +539,197 @@ async function callGeminiAPI(instructionText) {
         document.getElementById('usedModel').innerText = "";
     }
 
-	
+// --- 语音识别核心逻辑 (30秒倒计时增强版) ---
+let mediaRecorder;
+let audioChunks = [];
+let globalStream = null;
+let isRecording = false; 
+let countdownInterval; // 🌟 核心新增：用于控制动态倒计时的定时器
+
+// 合并后的录音开关函数
+async function toggleRecording() {
+    const btn = document.getElementById('recordBtn');
+
+    if (!isRecording) {
+        // --- 动作：开始录音 ---
+        try {
+            btn.innerText = "⏳ 准备中...";
+            btn.disabled = true; // 防止狂点导致卡死
+
+            if (!globalStream || !globalStream.active) {
+                globalStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
+            
+            mediaRecorder = new MediaRecorder(globalStream, { mimeType: 'audio/webm;codecs=opus' }); 
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) audioChunks.push(event.data);
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+
+            let remainingTime = 30; // 🌟 设定 30 秒倒计时起点
+            btn.innerText = `🛑 录音中 (${remainingTime}s)`;
+            btn.style.backgroundColor = "#c0392b";
+            btn.disabled = false;
+            document.getElementById('status').innerText = "🔴 正在聆听 (最多录制30秒)..."; 
+
+            // 🌟 核心修复：使用 setInterval 实现每秒更新的倒计时
+            countdownInterval = setInterval(() => {
+                remainingTime--;
+                if (remainingTime > 0) {
+                    btn.innerText = `🛑 录音中 (${remainingTime}s)`; // 按钮上动态显示倒计时
+                } else {
+                    // 时间到 0，自动结束
+                    clearInterval(countdownInterval);
+                    alert("⏱️ 30秒录音时间到！已自动为您结束并开始转换。");
+                    toggleRecording(); // 相当于系统帮你点了一下“结束”按钮
+                }
+            }, 1000); // 1000 毫秒 = 1 秒
+
+        } catch (err) {
+            alert("无法访问麦克风，请检查浏览器权限设置！");
+            btn.innerText = "🎤 点击录音";
+            btn.style.backgroundColor = "#e74c3c";
+            btn.disabled = false;
+        }
+    } else {
+        // --- 动作：结束录音 ---
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            // 🌟 核心修复：如果你在30秒内手动点结束了，必须清理掉倒计时
+            clearInterval(countdownInterval); 
+
+            btn.innerText = "⏳ 正在识别...";
+            btn.style.backgroundColor = "#95a5a6";
+            btn.disabled = true;
+            document.getElementById('status').innerText = "☁️ 上云识别中...";
+
+            mediaRecorder.onstop = async () => {
+                isRecording = false; // 重置状态
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                
+                // 🌟 这里调用了之前被你不小心删掉的两个核心函数
+                const base64Audio = await blobToBase64(audioBlob);
+                await recognizeSpeech(base64Audio);
+                
+                // 恢复初始状态
+                btn.innerText = "🎤 点击录音";
+                btn.style.backgroundColor = "#e74c3c";
+                btn.disabled = false;
+                document.getElementById('status').innerText = "✅ 语音转写完成";
+                setTimeout(() => { document.getElementById('status').innerText = ""; }, 3000);
+            };
+            mediaRecorder.stop();
+        }
+    }
+}
+
+// 🌟 补回丢失的函数 1：Blob 转 Base64 
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result.split(',')[1];
+            resolve(base64String);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+// 🌟 补回丢失的函数 2：调用 Google Cloud Speech-to-Text
+async function recognizeSpeech(base64Audio) {
+    const gcpApiKey = localStorage.getItem('gcpApiKey');
+    if (!gcpApiKey) return alert("请先在设置中配置 Google Cloud API Key！");
+
+    const customRulesText = localStorage.getItem('customRules') || "";
+    const customPhrases = customRulesText.split('\n').filter(line => line.trim().length > 0); 
+
+    const requestBody = {
+        config: {
+            encoding: "WEBM_OPUS", 
+            languageCode: "zh-CN", 
+            alternativeLanguageCodes: ["en-US"], 
+            speechContexts: [{
+                phrases: customPhrases, 
+                boost: 15 
+            }]
+        },
+        audio: {
+            content: base64Audio
+        }
+    };
+
+    try {
+        const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${gcpApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error("Google API 报错:", data.error);
+            alert("⚠️ 语音识别失败: " + data.error.message);
+            return;
+        }
+        
+        if (data.results && data.results.length > 0) {
+            const transcript = data.results.map(r => r.alternatives[0].transcript).join(' ');
+            const rawInputBox = document.getElementById('rawInput');
+            rawInputBox.value = rawInputBox.value + (rawInputBox.value ? "\n" : "") + transcript;
+        } else {
+            alert("未能识别到清晰的语音内容，请靠近麦克风再试一次。"); 
+        }
+    } catch (error) {
+        console.error("网络请求错误:", error);
+        alert("网络请求失败，请检查网络连接。");
+    }
+}
+
+	/* === 📱 手机屏幕适配代码 (响应式布局) === */
+        @media (max-width: 768px) {
+            /* 1. 核心：让主界面的左右两块变成上下排列 */
+            main {
+                flex-direction: column;
+                padding: 1rem 1rem 2rem; /* 减小手机边缘空白 */
+                gap: 1.5rem; /* 上下输入/输出框之间的间距 */
+            }
+            
+            /* 2. 顶部导航栏：让标题和设置按钮上下居中排列，防挤压 */
+            header {
+                flex-direction: column;
+                gap: 10px;
+                padding: 1rem;
+                text-align: center;
+            }
+
+            /* 3. 使用说明书：调整边距适应窄屏 */
+            .guide-container {
+                margin: 1rem 1rem 0;
+            }
+
+            /* 4. 按钮组优化：允许一排装不下的按钮自动换行到底部 */
+            .panel > div[style*="display: flex"] {
+                flex-wrap: wrap; 
+            }
+            
+            /* 5. 强行让部分按钮在手机上占满宽度，方便手指点击 */
+            button.action-btn {
+                flex: 1 1 100% !important; /* 让操作按钮在手机上占满一行 */
+                margin-bottom: 5px;
+            }
+
+            /* 6. 设置弹窗适配：让弹窗面板在手机上更宽 */
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+        }
+
 </script>
 
 <footer style="margin-top: -20px; padding-bottom: 1rem;">
