@@ -36,10 +36,20 @@
         .panel { flex: 1; background: var(--box-bg); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 1.5rem; border: 1px solid var(--border); }
         h2 { margin-top: 0; font-size: 1.2rem; color: var(--primary); }
         
-        /* 输入区 */
-        #rawInput { flex: 1; width: 100%; padding: 1rem; border: 1px solid var(--border); border-radius: 4px; resize: none; font-size: 1rem; font-family: inherit; box-sizing: border-box; margin-bottom: 1rem; line-height: 1.5; }
-        #rawInput:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 5px rgba(24, 188, 156, 0.3); }
+	/* --- 智能输入区全新样式：高度精确补偿，告别跳动 --- */
+        .smart-textarea { width: 100%; padding: 1rem; border: 1px solid var(--border); border-radius: 4px; resize: none; font-size: 1rem; font-family: inherit; box-sizing: border-box; line-height: 1.5; overflow-y: auto; transition: height 0.1s; }
+        .smart-textarea:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 5px rgba(24, 188, 156, 0.3); }
         
+        /* 初诊框：总高度 = 复诊旧病历 + 标题 + 快捷键 + 复诊新输入 */
+        #rawInputNew { min-height: 380px; max-height: 500px; margin-bottom: 1rem; }
+        
+        /* 复诊框组件组合 */
+        #pastSoapInput { min-height: 120px; max-height: 300px; }
+        .past-style { background: #fafafa; border: 1px dashed #7f8c8d; }
+        .past-style:focus { background: white; }
+        
+        #rawInputFollowup { min-height: 160px; max-height: 350px; margin-bottom: 1rem; }       
+
 	button.action-btn { 
             background-color: var(--secondary); 
             color: white; 
@@ -63,6 +73,20 @@
         button.btn-reset { background-color: #95a5a6; }
         button.btn-reset:hover { background-color: #7f8c8d; }
 
+	/* --- 优化：居中的胶囊型切换开关 --- */
+        .mode-switch { display: flex; margin: 0 auto 1.5rem auto; background: #ecf0f1; padding: 0.3rem; border-radius: 8px; align-self: center; }
+        .mode-switch label { cursor: pointer; font-weight: bold; color: var(--primary); margin: 0; }
+        .mode-switch span { display: inline-block; padding: 0.6rem 2.5rem; border-radius: 6px; transition: 0.3s; text-align: center; }
+        .mode-switch input[type="radio"] { display: none; }
+        .mode-switch input[type="radio"]:checked + span { background: var(--secondary); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        
+        .quick-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+        .tag-btn { background: #e8f4f8; border: 1px solid var(--info); color: var(--info); padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.85rem; cursor: pointer; transition: 0.2s; font-weight: bold; }
+        .tag-btn:hover { background: var(--info); color: white; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
         /* 四宫格输出区 */
         .output-grid { display: flex; flex-direction: column; gap: 1rem; flex: 1; overflow-y: auto; padding-right: 5px; }
         
@@ -83,19 +107,8 @@
 }
         
 
-.soap-section textarea {
-    min-height: 80px;
-    height: auto;
-    padding: 1rem; /* 回归正常的均匀内边距 */
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    resize: none;
-    font-size: 1rem;
-    font-family: inherit;
-    box-sizing: border-box;
-    line-height: 1.5;
-    overflow-y: hidden;
-}
+/* 英文输出区：允许更长的滚动 */
+.soap-section textarea { min-height: 100px; max-height: 400px; padding: 1rem; border: 1px solid var(--border); border-radius: 4px; resize: none; font-size: 1rem; font-family: inherit; box-sizing: border-box; line-height: 1.5; overflow-y: auto; transition: height 0.1s; }
         
 .section-label {
     font-weight: bold;
@@ -226,7 +239,28 @@
                 <option value="gemini-2.0-flash">🚀 Gemini 2.0 Flash (极速响应)</option>
             </select>
         </div>
-        <textarea id="rawInput" placeholder="在此输入门诊速记...&#10;例如：&#10;m 45y, 失眠伴随偏头痛3个月。之前查出过 chronic migraine，吃止痛药无效。近期压力大。无心悸，未见盗汗。右侧颈肩肌肉僵硬压痛。舌尖红，苔薄黄，脉弦细。"></textarea>
+
+        <div class="mode-switch">
+            <label><input type="radio" name="visitMode" value="new" checked onchange="toggleMode()"> <span>🆕 初诊 (New Patient)</span></label>
+            <label><input type="radio" name="visitMode" value="followup" onchange="toggleMode()"> <span>🔄 复诊 (Follow-up)</span></label>
+        </div>
+
+        <div id="newPatientContainer" style="display: flex; flex-direction: column; flex: 1; animation: fadeIn 0.3s;">
+            <textarea id="rawInputNew" class="smart-textarea" oninput="autoResize(this)" placeholder="在此输入初诊的门诊速记...&#10;例如：&#10;m 45y, 失眠伴随偏头痛3个月。之前查出过 chronic migraine，吃止痛药无效。近期压力大。无心悸，未见盗汗。右侧颈肩肌肉僵硬压痛。舌尖红，苔薄黄，脉弦细。"></textarea>
+        </div>
+
+        <div id="followupContainer" style="display: none; flex-direction: column; flex: 1; animation: fadeIn 0.3s;">
+            <div style="font-weight: bold; color: var(--primary); margin-bottom: 0.5rem; font-size: 0.95rem;">📋 第一步：粘贴上一次的病历 (Past SOAP)</div>
+            <textarea id="pastSoapInput" class="smart-textarea past-style" oninput="autoResize(this)" placeholder="在此粘贴上一次就诊的英文病历..."></textarea>
+            
+            <div style="font-weight: bold; color: var(--primary); margin-bottom: 0.5rem; margin-top: 1rem; font-size: 0.95rem;">✏️ 第二步：本次就诊新情况 (Today's Updates)</div>
+            
+            <div class="quick-tags" id="quickTags">
+                </div>
+            
+            <textarea id="rawInputFollowup" class="smart-textarea" oninput="autoResize(this)" placeholder="在此输入本次新变化...&#10;例如：&#10;上次扎完针肩膀疼痛从8降到3，但昨晚开始有点失眠。脉细数，守原方加神门。"></textarea>
+        </div>
+	
 	<div style="display: flex; gap: 1rem; flex-wrap: wrap;">
 	    <button id="recordBtn" class="action-btn" style="flex: 1; background-color: #e74c3c;" onclick="toggleRecording()">🎤 点击录音</button>            <button id="generateBtn" class="action-btn" style="flex: 2;" onclick="generateSOAP()">✨ 智能生成</button>
             <button id="resetBtn" class="action-btn btn-reset" style="flex: 1;" onclick="resetAll()">🗑️ 一键清空</button>
@@ -246,7 +280,7 @@
             <span class="section-label">S (Subjective)</span>
             <button class="copy-btn" onclick="copySection(this, 'outS')">📋 复制</button>
         </div>
-        <textarea id="outS" oninput="adjustTextareaHeight('outS')" placeholder="Subjective..."></textarea>
+        <textarea id="outS" oninput="autoResize(this)" placeholder="Subjective..."></textarea>
     </div>
 
     <div class="soap-section">
@@ -254,7 +288,7 @@
             <span class="section-label">O (Objective)</span>
             <button class="copy-btn" onclick="copySection(this, 'outO')">📋 复制</button>
         </div>
-        <textarea id="outO" oninput="adjustTextareaHeight('outO')" placeholder="Objective..."></textarea>
+        <textarea id="outO" oninput="autoResize(this)" placeholder="Objective..."></textarea>
     </div>
   </div>
 </div>
@@ -270,12 +304,24 @@
 	<label>☁️ 1.5 Google Cloud 语音 API Key </label>
 	<input type="password" id="gcpApiKeyInput" placeholder="请粘贴 Google Cloud API Key...">
 
-        <label>🧠 2. 底层 System Prompt (核心运转逻辑，建议勿动)</label>
-        <textarea id="promptInput" style="height: 180px; font-size: 0.9rem;"></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin: 1rem 0 0.5rem;">
+            <label style="margin: 0;">🧠 2. 基础人设与死规矩 (System Prompt)</label>
+            <button onclick="restoreDefaultPrompt()" style="background: none; border: 1px solid #7f8c8d; color: #7f8c8d; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#7f8c8d'; this.style.color='white';" onmouseout="this.style.background='none'; this.style.color='#7f8c8d';">🔄 恢复出厂配置</button>
+        </div>
+        <textarea id="promptInput" style="height: 100px; font-size: 0.9rem;"></textarea>
+        
+        <label>🆕 2.1 初诊处理指令 (随时微调)</label>
+        <textarea id="newTaskInput" style="height: 60px; font-size: 0.9rem;"></textarea>
+
+        <label>🔄 2.2 复诊处理指令 (重点调教区：控制对比逻辑)</label>
+        <textarea id="followupTaskInput" style="height: 120px; font-size: 0.9rem;"></textarea>
         
         <label>📚 3. 医生的私人词典 / 习惯规则库</label>
         <textarea id="rulesInput" placeholder="在这里输入您的翻译习惯，例如：&#10;1. 遇到 '平补平泻' 统一翻译为 'Even method'&#10;2. P部分必须使用项目符号 (Bullet points)"></textarea>
         
+	<label>🏷️ 4. 自定义复诊快捷短语 (用逗号分隔)</label>
+        <textarea id="tagsInput" placeholder="疼痛减轻, 舌脉如前, 守原方加减, 睡眠改善, 新发症状:" style="height: 60px;"></textarea>
+
         <div class="backup-section">
             <p><strong>⚠️ 数据防丢提醒：</strong> 您的 API 密钥和私人字典仅保存在当前浏览器的缓存中。如果清理浏览器垃圾，数据将会丢失。请定期导出备份文件！</p>
             <div class="backup-btns">
@@ -293,54 +339,82 @@
 </div>
 
 <script>
-// 新增：自动调整高度的逻辑
-function adjustTextareaHeight(id) {
-    const el = document.getElementById(id);
-    if (el) {
-        el.style.height = 'auto';
-        const newHeight = el.scrollHeight > 80 ? el.scrollHeight : 80;
-        el.style.height = newHeight + 'px'; // 确保使用了计算后的 newHeight
+// --- 新增：智能获取当前正在使用的那个文本框 ---
+    function getActiveRawInput() {
+        const mode = document.querySelector('input[name="visitMode"]:checked').value;
+        return mode === 'new' ? document.getElementById('rawInputNew') : document.getElementById('rawInputFollowup');
     }
-}
+
+// --- 全局通用：文本框自适应高度 ---
+    function autoResize(el) {
+        // 如果传入的是 ID 字符串，先获取元素
+        if (typeof el === 'string') {
+            el = document.getElementById(el);
+        }
+        if (!el) return;
+        
+        el.style.height = 'auto'; // 第一步：强制收缩，为了测量真实内容高度
+        el.style.height = el.scrollHeight + 'px'; // 第二步：根据内容物的高度撑开
+    }
+
+
     // 【Prompt】
-    const defaultPrompt = `# Role: Senior TCM Physician Scribe
-Translate clinical shorthand and raw inputs into a highly professional, clinical-standard English SOAP note.
+    const defaultPrompt = `# Role: Senior Clinical Scribe
+You are translating raw clinical notes into a highly professional English SOAP note.
 
-# Clinical Tone & Style:
-- Use concise, objective medical phrasing (e.g., "Pt presents with...", "Pt reports...", "Pt denies...").
-- Eliminate narrative fluff. Use standard medical abbreviations (e.g., CC, Hx, Dx, Sx, ROM) appropriately.
+# Tone & Style (Adaptive Hybrid Approach):
+1. ADAPTIVE FORMATTING (CRITICAL): Use a smart mix of concise professional prose and telegraphic bullets based on the complexity of the information.
+   - For the main narrative, complex history, or nuanced symptom descriptions, use concise medical prose (e.g., "Pt returns for follow-up reporting...", "Pt presents with..."). Do NOT over-narrate.
+   - For simple symptom updates, pain scales, or straightforward lists, use strict telegraphic bullets (e.g., "Shoulder pain: improved to 3/10", "Insomnia: unchanged").
+2. OBJECTIVITY: Western diagnoses must be framed as "Reported Hx of...".
+3. EXCLUSION RULE: DO NOT include Tongue and Pulse descriptions anywhere in the [S] or [O] sections.
+4. ZERO PADDING: Output ONLY the [S] and [O] sections.
 
-# Strict Formatting Rules (API Optimized):
-1. OUTPUT STRUCTURE: You MUST output exactly TWO sections beginning with [S] and [O].
-2. ZERO PADDING: Do NOT output any conversational text, intro, or outro before or after the blocks. 
-3. INTEGRITY: If information for a section is missing from the input, output "N/A". NEVER hallucinate data, symptoms, or interventions.
+# Structural Rules:
+[S] Subjective: A hybrid of a short opening narrative for CC/context, followed by bulleted symptom lists.
+[O] Objective: Bulleted list of physical exam findings (excluding Tongue/Pulse).`;
 
-# Section Guidelines:
-[S] Subjective: 
-- Include Chief Complaint (CC), onset, and pain severity if provided.
-- ALL Western Medical Diagnoses or conditions MUST be placed here and framed strictly as patient-reported history or external referrals (e.g., "Pt reports MD diagnosis of [Condition]" or "Reported PMHx of [Disease]").
-- Translate negative symptoms strictly as "Pt denies [Symptom]".
+// 【任务提示词出厂设置】
+    const defaultNewTask = `[Task: NEW Patient SOAP Note]
+Format the raw notes into a baseline [S] and [O] section using the adaptive hybrid style.
 
-[O] Objective: 
-- Include physical exam findings, Range of Motion (ROM), or orthopedic tests if provided.
-- Tongue and Pulse descriptions MUST adhere strictly to WHO/Bensky standardized TCM terminology.
-- FORMATTING: Output findings in a clean, bulleted list or distinct lines (e.g., separate lines for Physical Exam, Tongue, and Pulse) for high readability in audits.`;
+# Instructions:
+- [S]: Write a concise 1-2 sentence narrative to establish the Chief Complaint (CC) and HPI context. Then, list associated symptoms, PMHx, and reviews as clean bullet points below it.
+- [O]: Bulleted list of physical observations ONLY. Ensure no Tongue/Pulse data is included.`;
+    
+    const defaultFollowupTask = `[Task: FOLLOW-UP Patient SOAP Note]
+Synthesize [Past SOAP Note] and [Today's Updates] into a clear record of clinical evolution using the hybrid style.
 
- window.onload = function() {
+# Synthesis Logic:
+1. CC SHIFT (CRITICAL): Check if the patient presents with a completely new primary issue today. If yes, explicitly establish this new issue as today's Chief Complaint (CC) in the opening narrative, and demote the past CC to the tracked symptom list.
+2. CONTEXTUAL OPENING: Write a brief 1-2 sentence narrative opening in [S] to capture the patient's overall status, new CC (if applicable), or general feedback.
+3. RAPID TRACKING: Below the opening, use highly concise bulleted comparisons for specific past symptoms (e.g., "Lower back pain (Past CC): improved to 3/10", "Insomnia: resolved").
+4. NEW ISSUES: Integrate new symptoms professionally. Use phrasing like "New onset of..." or list them clinically. ABSOLUTELY DO NOT use artificial text tags or brackets like "[NEW]".
+5. UPDATED FINDINGS: In the [O] section, update physical observations based on today's presentation. DO NOT include Tongue/Pulse.`;
+
+const defaultTags = "疼痛减轻, 舌脉如前, 守原方加减, 睡眠改善, 新发症状:";
+
+    window.onload = function() {
         if (!localStorage.getItem('systemPrompt')) {
             localStorage.setItem('systemPrompt', defaultPrompt);
         }
-	if (localStorage.getItem('preferredModel')) {
+        if (localStorage.getItem('preferredModel')) {
             document.getElementById('modelSelect').value = localStorage.getItem('preferredModel');
         }
         loadSettingsToUI();
+        renderTags(); // 渲染快捷标签
+        toggleMode(); // 初始化时执行一次，确保初诊模式下隐藏不需要的元素
     };
 
-function loadSettingsToUI() {
+    function loadSettingsToUI() {
         document.getElementById('promptInput').value = localStorage.getItem('systemPrompt') || defaultPrompt;
+        document.getElementById('newTaskInput').value = localStorage.getItem('newTask') || defaultNewTask;
+        document.getElementById('followupTaskInput').value = localStorage.getItem('followupTask') || defaultFollowupTask;
+        
         document.getElementById('apiKeyInput').value = localStorage.getItem('apiKey') || '';
-        document.getElementById('gcpApiKeyInput').value = localStorage.getItem('gcpApiKey') || ''; // 新增读取 GCP Key
+        document.getElementById('gcpApiKeyInput').value = localStorage.getItem('gcpApiKey') || '';
         document.getElementById('rulesInput').value = localStorage.getItem('customRules') || '';
+        document.getElementById('tagsInput').value = localStorage.getItem('customTags') || defaultTags;
     }
 
     function openSettings() { loadSettingsToUI(); document.getElementById('settingsModal').style.display = 'flex'; }
@@ -348,26 +422,37 @@ function loadSettingsToUI() {
     
     function saveSettings() {
         localStorage.setItem('apiKey', document.getElementById('apiKeyInput').value.trim());
-        localStorage.setItem('gcpApiKey', document.getElementById('gcpApiKeyInput').value.trim()); // 新增保存 GCP Key
+        localStorage.setItem('gcpApiKey', document.getElementById('gcpApiKeyInput').value.trim());
         localStorage.setItem('systemPrompt', document.getElementById('promptInput').value.trim());
+        localStorage.setItem('newTask', document.getElementById('newTaskInput').value.trim());
+        localStorage.setItem('followupTask', document.getElementById('followupTaskInput').value.trim());
         localStorage.setItem('customRules', document.getElementById('rulesInput').value.trim());
+        localStorage.setItem('customTags', document.getElementById('tagsInput').value.trim());
+        renderTags(); 
         closeSettings();
         alert('✅ 配置已安全保存在本地浏览器！');
     }
 
-    // 导入导出设置功能也需要加上 gcpApiKey
     function exportSettings() {
         const settingsData = { 
             apiKey: document.getElementById('apiKeyInput').value.trim(), 
-            gcpApiKey: document.getElementById('gcpApiKeyInput').value.trim(), // 新增导出
+            gcpApiKey: document.getElementById('gcpApiKeyInput').value.trim(),
             systemPrompt: document.getElementById('promptInput').value.trim(), 
-            customRules: document.getElementById('rulesInput').value.trim() 
+            newTask: document.getElementById('newTaskInput').value.trim(),           // 🌟 新增：导出初诊指令
+            followupTask: document.getElementById('followupTaskInput').value.trim(), // 🌟 新增：导出复诊指令
+            customRules: document.getElementById('rulesInput').value.trim(),
+            customTags: document.getElementById('tagsInput').value.trim()
         };
         const dataStr = JSON.stringify(settingsData, null, 2);
         const blob = new Blob([dataStr], { type: "application/json" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = `SOAP_Backup_${new Date().toISOString().slice(0,10)}.json`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        const a = document.createElement('a'); 
+        a.href = url; 
+        a.download = `SOAP_Backup_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a); 
+        a.click(); 
+        document.body.removeChild(a); 
+        URL.revokeObjectURL(url);
     }
 
     function importSettings(event) {
@@ -378,19 +463,63 @@ function loadSettingsToUI() {
             try {
                 const importedData = JSON.parse(e.target.result);
                 if (importedData.apiKey !== undefined) document.getElementById('apiKeyInput').value = importedData.apiKey;
-                if (importedData.gcpApiKey !== undefined) document.getElementById('gcpApiKeyInput').value = importedData.gcpApiKey; // 新增导入
+                if (importedData.gcpApiKey !== undefined) document.getElementById('gcpApiKeyInput').value = importedData.gcpApiKey;
                 if (importedData.systemPrompt !== undefined) document.getElementById('promptInput').value = importedData.systemPrompt;
+                
+                // 🌟 新增：导入时读取初诊和复诊指令
+                if (importedData.newTask !== undefined) document.getElementById('newTaskInput').value = importedData.newTask;
+                if (importedData.followupTask !== undefined) document.getElementById('followupTaskInput').value = importedData.followupTask;
+                
                 if (importedData.customRules !== undefined) document.getElementById('rulesInput').value = importedData.customRules;
+                if (importedData.customTags !== undefined) document.getElementById('tagsInput').value = importedData.customTags;
+                
                 event.target.value = ''; 
                 alert("🎉 配置文件导入成功！请点击右下角【保存并生效】。");
-            } catch (error) { alert("❌ 文件格式错误，请导入正确的 .json 文件！"); }
+            } catch (error) { 
+                alert("❌ 文件格式错误，请导入正确的 .json 文件！"); 
+            }
         };
         reader.readAsText(file);
     }
 
+    // --- 新增：动态渲染快捷标签函数 ---
+    function renderTags() {
+        const tagsStr = localStorage.getItem('customTags') || defaultTags;
+        // 把逗号分隔的字符串切成数组，并去掉空白项
+        const tagsArray = tagsStr.split(/[,，]/).map(t => t.trim()).filter(t => t);
+        const container = document.getElementById('quickTags');
+        container.innerHTML = ''; // 清空原本写死的标签
+        
+        tagsArray.forEach(tag => {
+            const btn = document.createElement('button');
+            btn.className = 'tag-btn';
+            btn.innerText = '+ ' + tag;
+            btn.onclick = () => insertTag(tag);
+            container.appendChild(btn);
+        });
+    }
+
+	function insertTag(text) {
+    		const input = getActiveRawInput(); // 智能识别
+    		input.value += (input.value && !input.value.endsWith('\n') ? "，" : "") + text;
+    		input.focus();
+    		autoResize(input); // 触发高度撑开
+	}
+
+function restoreDefaultPrompt() {
+        const confirmRestore = confirm("💡 确定要恢复三个核心 Prompt 的出厂设置吗？\n不影响 API Key 和私人字典。");
+        if (confirmRestore) {
+            document.getElementById('promptInput').value = defaultPrompt;
+            document.getElementById('newTaskInput').value = defaultNewTask;
+            document.getElementById('followupTaskInput').value = defaultFollowupTask;
+            alert("✅ 已加载最新出厂 Prompt！请点击右下角的【💾 保存并生效】。");
+        }
+    }
+
     // 调用 API 核心函数
 
-async function callGeminiAPI(instructionText) {
+// 🚀 终极版：调用 API 核心函数 (启用原生 System Instruction)
+    async function callGeminiAPI(systemPrompt, userPrompt) {
         const apiKey = localStorage.getItem('apiKey');
         if (!apiKey) {
             alert("请先配置 API Key！");
@@ -398,44 +527,51 @@ async function callGeminiAPI(instructionText) {
             return null;
         }
 
-        // 1. 获取你在下拉菜单里选择的模型
         const selectedModel = document.getElementById('modelSelect').value;
-        let modelsToTry = [];
+        let modelsToTry = selectedModel === 'auto' 
+            ? ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-3-flash-preview'] 
+            : [selectedModel];
 
-        // 2. 智能排兵布阵 (最优设计版)
-        if (selectedModel === 'auto') {
-            // 自动模式：速度优先，最快的 2.0 打头阵，稳健的 2.5 兜底
-            modelsToTry = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-3-flash-preview'];
-        } else {
-            // 手动模式：绝对锁定！只试这一个，失败了坚决不偷偷切换其他模型
-            modelsToTry = [selectedModel];
-        }
-
-        // 3. 核心循环，加入 15 秒超时控制，告别“无限等待”
         for (let i = 0; i < modelsToTry.length; i++) {
             const currentModel = modelsToTry[i];
             const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
             
             try {
                 console.log(`正在尝试使用模型: ${currentModel}...`);
-                
-                // 设置 15 秒超时中断
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+                // 🌟 核心升级：使用 Gemini 原生的 system_instruction 字段
+                const requestBody = {
+                    system_instruction: { 
+                        parts: [{ text: systemPrompt }] // 这里的指令具有最高优先级，绝对服从
+                    },
+                    contents: [{ 
+                        role: "user", 
+                        parts: [{ text: userPrompt }] // 这里只放干活的数据
+                    }],
+                    generationConfig: { 
+                        temperature: 0.15,
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                S: { type: "STRING", description: "Subjective section text" },
+                                O: { type: "STRING", description: "Objective section text" }
+                            },
+                            required: ["S", "O"]
+                        }
+                    }
+                };
 
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     signal: controller.signal,
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: instructionText }] }],
-                        generationConfig: { 
-                            temperature: 0.0,
-                        }
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
-                clearTimeout(timeoutId); // 成功返回就取消超时
+                clearTimeout(timeoutId); 
                 const data = await response.json();
 
                 if (response.ok) {
@@ -444,25 +580,12 @@ async function callGeminiAPI(instructionText) {
                     return data.candidates[0].content.parts[0].text;
                 }
 
-                if ((response.status === 429 || response.status === 404) && i < modelsToTry.length - 1) {
-                    console.warn(`⚠️ ${currentModel} 拥堵或不可用，立即切换备选...`);
-                    continue; 
-                }
-
-                throw new Error(data.error?.message || `API 错误 (状态码: ${response.status})`);
+                if ((response.status === 429 || response.status === 404) && i < modelsToTry.length - 1) continue; 
+                throw new Error(data.error?.message || `API 错误`);
 
             } catch (error) {
-                if (error.name === 'AbortError') {
-                    console.warn(`⏱️ ${currentModel} 响应超时 (超过15秒)，切换下一个...`);
-                    if (i === modelsToTry.length - 1) {
-                        alert("所有模型响应超时，请检查网络或稍后再试。");
-                        return null;
-                    }
-                    continue;
-                }
-
+                if (error.name === 'AbortError' && i < modelsToTry.length - 1) continue;
                 if (i === modelsToTry.length - 1) {
-                    console.error("所有模型调用均失败:", error);
                     alert("发生错误: " + error.message);
                     return null;
                 }
@@ -473,49 +596,50 @@ async function callGeminiAPI(instructionText) {
 
     // 生成与智能分拣
     async function generateSOAP() {
-        const rawInput = document.getElementById('rawInput').value.trim();
-        if (!rawInput) return alert("请输入需要转换的门诊记录！");
+        const mode = document.querySelector('input[name="visitMode"]:checked').value;
+    	const rawInputBox = getActiveRawInput();
+    	const rawInput = rawInputBox.value.trim(); // 动态获取当前文字
+    	const pastSoap = document.getElementById('pastSoapInput') ? document.getElementById('pastSoapInput').value.trim() : "";
+
+        if (!rawInput) return alert("请输入本次就诊的门诊记录！");
+        if (mode === 'followup' && !pastSoap) return alert("复诊模式下，请先粘贴上一次的病历！");
 
         const btn = document.getElementById('generateBtn');
         const status = document.getElementById('status');
         btn.disabled = true; status.innerText = "⏳ AI 正在思考与排版，请稍候...";
-	document.getElementById('usedModel').innerText = ""; // 新增：开始生成时清空模型显示
+        document.getElementById('usedModel').innerText = ""; 
         
-        // 预清空内容并提示
         const boxes = ['outS', 'outO'];
         boxes.forEach(id => document.getElementById(id).value = "正在生成中...");
 
-        const systemPrompt = localStorage.getItem('systemPrompt');
-        const customRules = localStorage.getItem('customRules');
-        const fullInstruction = `[System Instructions]\n${systemPrompt}\n\n[Custom Translation Rules]\n${customRules}\n\n[User Raw Notes]\nPlease format the following into a SOAP note:\n${rawInput}`;
+        const systemPrompt = localStorage.getItem('systemPrompt') || defaultPrompt;
+        const newTask = localStorage.getItem('newTask') || defaultNewTask;
+        const followupTask = localStorage.getItem('followupTask') || defaultFollowupTask;
+        const customRules = localStorage.getItem('customRules') || "";
+        
+        let finalSystemPrompt = "";
+        let finalUserPrompt = "";
 
-        const result = await callGeminiAPI(fullInstruction);
+        // 🌟 彻底分离：把人设和规矩放进系统层，把任务和数据放进用户层
+        if (mode === 'new') {
+            finalSystemPrompt = `${systemPrompt}\n\n[Custom Translation Rules]\n${customRules}`;
+            finalUserPrompt = `${newTask}\n\n[User Raw Notes]\n${rawInput}`;
+        } else {
+            finalSystemPrompt = `${systemPrompt}\n\n[Custom Translation Rules]\n${customRules}`;
+            finalUserPrompt = `${followupTask}\n\n[Past SOAP Note]\n${pastSoap}\n\n[Today's Updates]\n${rawInput}`;
+        }
+
+        // 传入两个参数调用 API
+        const result = await callGeminiAPI(finalSystemPrompt, finalUserPrompt);
         
         if (result) {
             try {
-                // 1. 终极兼容提取法：精确抓取标签后面的内容
-		const matchS = result.match(/\[S\]([\s\S]*?)(?=\[O\]|$)/i);
-		const matchO = result.match(/\[O\]([\s\S]*?)$/i);
-                // 2. 兜底保护：如果 AI 完全没按指令输出这四个标签，直接展示原始文本
-                if (!matchS && !matchO) {
-                    document.getElementById('outS').value = "【⚠️ 格式解析失败，AI 原始输出如下，请检查】\n\n" + result;
-                    document.getElementById('outO').value = "";
-
-		    btn.disabled = false; 
-                    status.innerText = "";
-               return; // 提前结束
-                }
-
-                // 3. 智能清理工具：自动抹掉开头多余的 "Subjective:" 或 "Objective:" 等废话
-                const cleanText = (match) => {
-                    if (!match) return "N/A";
-                    // 只提取捕获组1的内容，并去掉开头的冗余标题和空格
-                    return match[1].replace(/^[\s\*:-]*(Subjective|Objective|Assessment|Plan)?[\s\*:-]*/i, '').trim() || "N/A";
-                };
-
-                // 4. 安全赋值到文本框
-                document.getElementById('outS').value = cleanText(matchS);
-                document.getElementById('outO').value = cleanText(matchO);
+                // 🌟 终极解析法：直接将 AI 返回的标准 JSON 字符串转为对象
+                const parsedData = JSON.parse(result);
+                
+                // 精准赋值，再也不用担心格式错乱
+                document.getElementById('outS').value = parsedData.S || "N/A";
+                document.getElementById('outO').value = parsedData.O || "N/A";
 
             } catch (e) {
                 // 极端情况备用方案
@@ -528,7 +652,7 @@ async function callGeminiAPI(instructionText) {
         
         btn.disabled = false; status.innerText = "";
 
-	boxes.forEach(id => adjustTextareaHeight(id));
+	boxes.forEach(id => autoResize(id));
 
 	// 建议在 generateSOAP 函数的最末尾（boxes.forEach 之后）加入：
 	status.innerText = "✅ 生成完毕！";
@@ -560,27 +684,34 @@ async function callGeminiAPI(instructionText) {
         }, 1500);
     }
 
-// 🗑️ 一键清空所有面板功能 (带防误删确认)
+// 🗑️ 增强版：一键清空所有面板
     function resetAll() {
-        // 防误触保护：如果输入框有内容，弹窗确认
-        if (document.getElementById('rawInput').value.trim() !== "") {
+        const newText = document.getElementById('rawInputNew').value.trim();
+        const folText = document.getElementById('rawInputFollowup').value.trim();
+        const pastText = document.getElementById('pastSoapInput').value.trim();
+
+        if (newText !== "" || folText !== "" || pastText !== "") {
             const confirmReset = confirm("⚠️ 确定要清空当前病历的所有内容吗？此操作无法恢复。");
             if (!confirmReset) return; 
         }
 
-        // 1. 清空左侧输入框
-        document.getElementById('rawInput').value = "";
+        // 彻底清空三个输入框
+        document.getElementById('rawInputNew').value = "";
+        document.getElementById('rawInputFollowup').value = "";
+        document.getElementById('pastSoapInput').value = "";
         
-        // 2. 清空右侧四个输出框
+        // 全部缩回初始高度
+        autoResize('rawInputNew');
+        autoResize('rawInputFollowup');
+        autoResize('pastSoapInput');
+        
+        // 清空右侧输出框
         const boxes = ['outS', 'outO'];
         boxes.forEach(id => {
             const el = document.getElementById(id);
-            el.value = "";
-            // 清空后强制重置文本框高度回到 80px
-            adjustTextareaHeight(id);
+            if (el) { el.value = ""; autoResize(el); }
         });
 
-        // 3. 清空状态栏和模型提示
         document.getElementById('status').innerText = "";
         document.getElementById('usedModel').innerText = "";
     }
@@ -724,10 +855,11 @@ async function recognizeSpeech(base64Audio) {
         }
         
         if (data.results && data.results.length > 0) {
-            const transcript = data.results.map(r => r.alternatives[0].transcript).join(' ');
-            const rawInputBox = document.getElementById('rawInput');
-            rawInputBox.value = rawInputBox.value + (rawInputBox.value ? "\n" : "") + transcript;
-        } else {
+        const transcript = data.results.map(r => r.alternatives[0].transcript).join(' ');
+        const rawInputBox = getActiveRawInput(); // 🌟 语音文字也懂得看脸色，当前是哪个模式就填进哪个框
+        rawInputBox.value = rawInputBox.value + (rawInputBox.value ? "\n" : "") + transcript;
+        autoResize(rawInputBox); // 触发高度撑开
+    } else {
             alert("未能识别到清晰的语音内容，请靠近麦克风再试一次。"); 
         }
     } catch (error) {
@@ -736,7 +868,18 @@ async function recognizeSpeech(base64Audio) {
     }
 }
 
-	
+    // --- 极简版：切换模式 UI 联动 (告别文字闪烁) ---
+    function toggleMode() {
+        const mode = document.querySelector('input[name="visitMode"]:checked').value;
+        if (mode === 'new') {
+            document.getElementById('newPatientContainer').style.display = 'flex';
+            document.getElementById('followupContainer').style.display = 'none';
+        } else {
+            document.getElementById('newPatientContainer').style.display = 'none';
+            document.getElementById('followupContainer').style.display = 'flex';
+        }
+    }
+
 
 </script>
 
